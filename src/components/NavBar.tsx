@@ -13,7 +13,7 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { useState, useEffect } from "react";
-import { H3 } from "./ui/typography";
+import { H5 } from "./ui/typography";
 
 export const ConnectWalletButton = () => {
   const { sdk, connected, connecting, account } = useSDK();
@@ -77,15 +77,15 @@ export const NavBar = () => {
               <div className="flex items-baseline space-x-4">
                 <Link
                   href="/"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                  className="text-gray-600 hover:text-gray-900 px-1 py-2 rounded-md text-sm font-medium transition-colors duration-200"
                 >
-                  <H3>Home</H3>
+                  <H5>Home</H5>
                 </Link>
                 <Link
                   href="/marketer"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                  className="text-gray-600 hover:text-gray-900 px-1 py-2 rounded-md text-sm font-medium transition-colors duration-200"
                 >
-                  <H3>Marketer</H3>
+                  <H5>Marketer</H5>
                 </Link>
               </div>
             </div>
