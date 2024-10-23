@@ -1,149 +1,50 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  subscribeUser,
-  unsubscribeUser,
-  sendNotification,
-} from "./actions/pwa";
+import QrCode from "@/components/QrCode";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { H3, H4 } from "@/components/ui/typography";
+import { useSDK } from "@metamask/sdk-react";
 
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/\\-/g, "+")
-    .replace(/_/g, "/");
-
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
-
-function PushNotificationManager() {
-  const [isSupported, setIsSupported] = useState(false);
-  const [subscription, setSubscription] = useState<PushSubscription | null>(
-    null
-  );
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    if ("serviceWorker" in navigator && "PushManager" in window) {
-      setIsSupported(true);
-      registerServiceWorker();
-    }
-  }, []);
-
-  async function registerServiceWorker() {
-    const registration = await navigator.serviceWorker.register("/sw.js", {
-      scope: "/",
-      updateViaCache: "none",
-    });
-    const sub = await registration.pushManager.getSubscription();
-    setSubscription(sub);
-  }
-
-  async function subscribeToPush() {
-    const registration = await navigator.serviceWorker.ready;
-    const sub = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(
-        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-      ),
-    });
-    setSubscription(sub);
-    await subscribeUser(sub);
-  }
-
-  async function unsubscribeFromPush() {
-    await subscription?.unsubscribe();
-    setSubscription(null);
-    await unsubscribeUser();
-  }
-
-  async function sendTestNotification() {
-    if (subscription) {
-      await sendNotification(message);
-      setMessage("");
-    }
-  }
-
-  if (!isSupported) {
-    return <p>Push notifications are not supported in this browser.</p>;
-  }
+function QrCodeOverview() {
+  const { account } = useSDK();
+  const contract = "0x1234...5678"; // TODO integrate with contract
 
   return (
-    <div>
-      <h3>Push Notifications</h3>
-      {subscription ? (
-        <>
-          <p>You are subscribed to push notifications.</p>
-          <button onClick={unsubscribeFromPush}>Unsubscribe</button>
-          <input
-            type="text"
-            placeholder="Enter notification message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
+    <Card className="w-full max-w-md mx-auto bg-gradient-to-br from-green-400 to-green-600 text-white">
+      <CardContent className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <H3 className="font-bold">LivyPass</H3>
+        </div>
+
+        <Separator className="bg-white/20" />
+
+        <div className="space-y-2">
+          <H4 className="font-semibold">
+            Claim Rewards By Scanning your QR Code
+          </H4>
+        </div>
+        {account ? (
+          <QrCode
+            data={{
+              userAddress: account,
+              contractAddress: contract,
+            }}
+            title="Scan for Entry"
+            description="Present this QR code to the cashier"
           />
-          <button onClick={sendTestNotification}>Send Test</button>
-        </>
-      ) : (
-        <>
-          <p>You are not subscribed to push notifications.</p>
-          <button onClick={subscribeToPush}>Subscribe</button>
-        </>
-      )}
-    </div>
-  );
-}
-
-function InstallPrompt() {
-  const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
-
-  useEffect(() => {
-    setIsIOS(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
-    );
-
-    setIsStandalone(window.matchMedia("(display-mode: standalone)").matches);
-  }, []);
-
-  if (isStandalone) {
-    return null; // Don't show install button if already installed
-  }
-
-  return (
-    <div>
-      <h3>Install App</h3>
-      <button>Add to Home Screen</button>
-      {isIOS && (
-        <p>
-          To install this app on your iOS device, tap the share button
-          <span role="img" aria-label="share icon">
-            {" "}
-            ⎋{" "}
-          </span>
-          and then &quot;Add to Home Screen&quot;
-          <span role="img" aria-label="plus icon">
-            {" "}
-            ➕{" "}
-          </span>
-          .
-        </p>
-      )}
-    </div>
+        ) : (
+          <p>Please connect your wallet to continue</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
 export default function Page() {
   return (
-    <div>
-      <PushNotificationManager />
-      <InstallPrompt />
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <QrCodeOverview />
     </div>
   );
 }
