@@ -13,6 +13,7 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { useState, useEffect } from "react";
+import { H3 } from "./ui/typography";
 
 export const ConnectWalletButton = () => {
   const { sdk, connected, connecting, account } = useSDK();
@@ -68,14 +69,31 @@ export const ConnectWalletButton = () => {
 
 export const NavBar = () => {
   return (
-    <nav className="flex items-center justify-between max-w-screen-xl px-6 mx-auto py-7 rounded-xl">
-      <Link href="/" className="flex gap-1 px-6">
-        <span className="text-2xl font-bold">
-          <span className="text-gray-900">LivyPass</span>
-        </span>
-      </Link>
-      <div className="flex gap-4 px-6">
-        <ConnectWalletButton />
+    <nav className="bg-white shadow-sm">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <div className="hidden md:block ml-10">
+              <div className="flex items-baseline space-x-4">
+                <Link
+                  href="/"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  <H3>Home</H3>
+                </Link>
+                <Link
+                  href="/marketer"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  <H3>Marketer</H3>
+                </Link>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <ConnectWalletButton />
+          </div>
+        </div>
       </div>
     </nav>
   );
