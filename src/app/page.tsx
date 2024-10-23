@@ -11,7 +11,7 @@ function QrCodeOverview() {
   const contract = "0x1234...5678"; // TODO integrate with contract
 
   return (
-    <Card className="w-full max-w-md mx-auto bg-gradient-to-br from-green-400 to-green-600 text-white">
+    <Card className="w-full max-w-md mx-auto bg-gradient-to-br from-blue-600 to-purple-600 text-white">
       <CardContent className="p-6 space-y-6">
         <div className="flex justify-between items-center">
           <H3 className="font-bold">LivyPass</H3>
@@ -30,7 +30,7 @@ function QrCodeOverview() {
               userAddress: account,
               contractAddress: contract,
             }}
-            title="Scan for Entry"
+            title="Scan"
             description="Present this QR code to the cashier"
           />
         ) : (
@@ -43,7 +43,7 @@ function QrCodeOverview() {
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-100 flex items-start justify-center p-4">
       <QrCodeOverview />
     </div>
   );
