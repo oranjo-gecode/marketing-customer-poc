@@ -1,59 +1,58 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { H3, H4 } from "@/components/ui/typography";
 import { useSDK } from "@metamask/sdk-react";
-import { Button } from "@/components/ui/button";
 import { Html5QrcodeScanner } from "html5-qrcode";
 
 function MarketerOverview() {
   const { account } = useSDK();
-  const [scanning, setScanning] = useState(false);
   const [scannedData, setScannedData] = useState<null | {
     userAddress: string;
     contractAddress: string;
   }>(null);
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const readerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear();
-      }
-    };
-  }, []);
-
-  const startScanning = () => {
-    setScanning(true);
-    scannerRef.current = new Html5QrcodeScanner(
+  const html5QrcodeScanner = useMemo(() => {
+    return new Html5QrcodeScanner(
       "reader",
       { fps: 10, qrbox: { width: 250, height: 250 } },
       /* verbose= */ false
     );
-    scannerRef.current.render(onScanSuccess, onScanFailure);
+  }, []);
+
+  useEffect(() => {
+    if (!readerRef.current) return;
+
+    const onScanSuccess = (decodedText: string) => {
+      try {
+        const parsedData = JSON.parse(decodedText);
+        setScannedData(parsedData);
+        setIsScanning(false);
+      } catch (error) {
+        console.error("Invalid QR code data:", error);
+      }
+    };
+
+    html5QrcodeScanner.render(onScanSuccess, () => {});
+
+    return () => {
+      html5QrcodeScanner.clear().catch((error) => {
+        console.error("Failed to clear html5QrcodeScanner. ", error);
+      });
+    };
+  }, [html5QrcodeScanner, isScanning]);
+
+  const handleStartScan = () => {
+    setIsScanning(true);
+    setScannedData(null);
   };
 
-  const stopScanning = () => {
-    if (scannerRef.current) {
-      scannerRef.current.clear();
-      setScanning(false);
-    }
-  };
-
-  const onScanSuccess = (decodedText: string) => {
-    try {
-      const parsedData = JSON.parse(decodedText);
-      setScannedData(parsedData);
-      stopScanning();
-    } catch (error) {
-      console.error("Invalid QR code data:", error);
-    }
-  };
-
-  const onScanFailure = (error: unknown) => {
-    console.warn(`QR code scan error: ${error}`);
+  const handleStopScan = () => {
+    setIsScanning(false);
   };
 
   return (
@@ -70,15 +69,23 @@ function MarketerOverview() {
         </div>
         {account ? (
           <>
-            {!scanning && !scannedData && (
-              <Button
-                onClick={startScanning}
-                className="w-full bg-white text-blue-600 hover:bg-blue-100"
+            <div id="reader" ref={readerRef} className="w-full"></div>
+            {!isScanning && !scannedData && (
+              <button
+                onClick={handleStartScan}
+                className="bg-white text-blue-600 px-4 py-2 rounded"
               >
                 Start Scanning
-              </Button>
+              </button>
             )}
-            {scanning && <div id="reader" className="w-full"></div>}
+            {isScanning && (
+              <button
+                onClick={handleStopScan}
+                className="bg-white text-blue-600 px-4 py-2 rounded"
+              >
+                Stop Scanning
+              </button>
+            )}
             {scannedData && (
               <div className="mt-4 p-4 bg-white/10 rounded-md">
                 <p className="text-sm">
@@ -87,15 +94,6 @@ function MarketerOverview() {
                 <p className="text-sm">
                   Contract Address: {scannedData.contractAddress}
                 </p>
-                <Button
-                  onClick={() => {
-                    setScannedData(null);
-                    setScanning(false);
-                  }}
-                  className="mt-2 w-full bg-white text-blue-600 hover:bg-blue-100"
-                >
-                  Scan Again
-                </Button>
               </div>
             )}
           </>
