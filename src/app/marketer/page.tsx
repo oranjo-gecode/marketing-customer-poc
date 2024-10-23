@@ -1,11 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { H3, H4 } from "@/components/ui/typography";
 import { useSDK } from "@metamask/sdk-react";
-import { Html5QrcodeScanner } from "html5-qrcode";
 
 function MarketerOverview() {
   const { account } = useSDK();
@@ -15,17 +15,22 @@ function MarketerOverview() {
   }>(null);
   const [isScanning, setIsScanning] = useState(false);
   const readerRef = useRef<HTMLDivElement>(null);
+  const scannerRef = useRef<any>(null);
 
-  const html5QrcodeScanner = useMemo(() => {
-    return new Html5QrcodeScanner(
-      "reader",
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      /* verbose= */ false
-    );
+  useEffect(() => {
+    if (typeof window !== "undefined" && !scannerRef.current) {
+      import("html5-qrcode").then(({ Html5QrcodeScanner }) => {
+        scannerRef.current = new Html5QrcodeScanner(
+          "reader",
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          /* verbose= */ false
+        );
+      });
+    }
   }, []);
 
   useEffect(() => {
-    if (!readerRef.current) return;
+    if (!readerRef.current || !scannerRef.current || !isScanning) return;
 
     const onScanSuccess = (decodedText: string) => {
       try {
@@ -37,14 +42,16 @@ function MarketerOverview() {
       }
     };
 
-    html5QrcodeScanner.render(onScanSuccess, () => {});
+    scannerRef.current.render(onScanSuccess, () => {});
 
     return () => {
-      html5QrcodeScanner.clear().catch((error) => {
-        console.error("Failed to clear html5QrcodeScanner. ", error);
-      });
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch((error: any) => {
+          console.error("Failed to clear html5QrcodeScanner. ", error);
+        });
+      }
     };
-  }, [html5QrcodeScanner, isScanning]);
+  }, [isScanning]);
 
   const handleStartScan = () => {
     setIsScanning(true);
