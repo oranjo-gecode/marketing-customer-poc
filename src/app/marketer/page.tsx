@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { H3, H4 } from "@/components/ui/typography";
 import { useSDK } from "@metamask/sdk-react";
+import { useZxing } from "react-zxing";
 
 function MarketerOverview() {
   const { account } = useSDK();
@@ -14,57 +15,27 @@ function MarketerOverview() {
     contractAddress: string;
   }>(null);
   const [isScanning, setIsScanning] = useState(false);
-  const scannerRef = useRef<any>(null);
 
-  useEffect(() => {
-    // Cleanup function
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear();
+  const { ref } = useZxing({
+    onDecodeResult(result) {
+      try {
+        const parsedData = JSON.parse(result.getText());
+        setScannedData(parsedData);
+        setIsScanning(false);
+      } catch (error) {
+        console.error("Invalid QR code data:", error);
       }
-    };
-  }, []);
+    },
+    paused: !isScanning,
+  });
 
-  const handleStartScan = async () => {
+  const handleStartScan = () => {
     setIsScanning(true);
     setScannedData(null);
-
-    try {
-      const { Html5QrcodeScanner } = await import("html5-qrcode");
-      scannerRef.current = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        /* verbose= */ false
-      );
-
-      scannerRef.current.render(onScanSuccess, onScanFailure);
-    } catch (error) {
-      console.error("Failed to initialize scanner:", error);
-      setIsScanning(false);
-    }
   };
 
   const handleStopScan = () => {
-    if (scannerRef.current) {
-      scannerRef.current.clear().catch((error: any) => {
-        console.error("Failed to clear html5QrcodeScanner. ", error);
-      });
-    }
     setIsScanning(false);
-  };
-
-  const onScanSuccess = (decodedText: string) => {
-    try {
-      const parsedData = JSON.parse(decodedText);
-      setScannedData(parsedData);
-      handleStopScan();
-    } catch (error) {
-      console.error("Invalid QR code data:", error);
-    }
-  };
-
-  const onScanFailure = (error: any) => {
-    console.warn(`QR code scan error: ${error}`);
   };
 
   return (
@@ -81,7 +52,9 @@ function MarketerOverview() {
         </div>
         {account ? (
           <>
-            <div id="reader" className="w-full"></div>
+            <div className="w-full">
+              {isScanning && <video ref={ref} className="w-full" />}
+            </div>
             {!isScanning && !scannedData && (
               <button
                 onClick={handleStartScan}
